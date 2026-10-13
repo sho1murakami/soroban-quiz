@@ -1,0 +1,740 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="そろばんクイズ">
+<meta name="theme-color" content="#EDF4EF" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#121915" media="(prefers-color-scheme: dark)">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<style>
+:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+body{margin:0}
+[hidden]{display:none!important}
+</style>
+<title>そろばんクイズ</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700;900&display=swap">
+<style>
+/* Layout: one-screen app. Landscape iPad = soroban left, quiz right; portrait / phone = stacked. */
+:root{
+  --bg:#EDF4EF; --card:#FFFFFF; --ink:#1E2B25; --muted:#5B6C64; --line:#D3E0D8; --soft:#E2EDE6;
+  --take:#11806A; --take-bg:#DCF2EA; --put:#D4561A; --put-bg:#FCE6D8; --on-take:#FFFFFF;
+  --star:#E5A100; --hint:#8F5300; --hint-bg:#FFF3D1;
+  --board:#F4E7CC; --frame:#6E4428; --beam:#3E2617; --rod:#B89A73; --bead:#4B2E1D; --shine:#8A6247; --shine-on:#FFFFFF;
+  --font:"Zen Maru Gothic","Hiragino Maru Gothic ProN","Hiragino Sans","Noto Sans JP",system-ui,sans-serif;
+  --r-lg:22px; --r-md:16px;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#121915; --card:#1C2621; --ink:#E9F2EC; --muted:#A2B3AA; --line:#33433B; --soft:#26332C;
+  --take:#3FC6A0; --take-bg:#173A30; --put:#FF8A4D; --put-bg:#40271A; --on-take:#0D1F18;
+  --star:#FFCB3D; --hint:#FFC46B; --hint-bg:#3A2D12;
+  --board:#2C231B; --frame:#8C5C38; --beam:#D7B38A; --rod:#6F5A44; --bead:#C8935F; --shine:#EDC598; --shine-on:#FFFFFF;
+  color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#121915; --card:#1C2621; --ink:#E9F2EC; --muted:#A2B3AA; --line:#33433B; --soft:#26332C;
+  --take:#3FC6A0; --take-bg:#173A30; --put:#FF8A4D; --put-bg:#40271A; --on-take:#0D1F18;
+  --star:#FFCB3D; --hint:#FFC46B; --hint-bg:#3A2D12;
+  --board:#2C231B; --frame:#8C5C38; --beam:#D7B38A; --rod:#6F5A44; --bead:#C8935F; --shine:#EDC598; --shine-on:#FFFFFF;
+  color-scheme:dark}
+
+*{box-sizing:border-box}
+html,body{height:100%}
+body{background:var(--bg);color:var(--ink);font-family:var(--font);font-weight:500;font-size:18px;line-height:1.6;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+button:focus-visible,select:focus-visible,input:focus-visible{outline:3px solid var(--take);outline-offset:3px}
+.app{max-width:1180px;margin:0 auto;padding-inline:clamp(16px,3vw,36px);padding-block:20px 32px;min-height:100%}
+.take{color:var(--take)} .put{color:var(--put)}
+.pt{display:inline-block;white-space:nowrap}
+.pt+.pt{margin-left:.3em}
+.pt b{font-size:1.15em;font-weight:900}
+.muted{color:var(--muted)}
+
+/* home */
+.home-head{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-end;gap:16px 24px;margin-bottom:24px}
+.modes{display:inline-flex;gap:4px;padding:5px;margin-bottom:18px;background:var(--soft);border-radius:999px;max-width:100%}
+.mode{min-height:54px;padding:6px 30px;border-radius:999px;font-size:24px;font-weight:700;color:var(--muted);border:2px solid transparent}
+.mode[aria-pressed="true"]{background:var(--card);color:var(--ink);border-color:var(--line)}
+.rules-h{margin:16px 0 4px;font-size:18px;font-weight:700}
+h1{margin:0;font-size:clamp(34px,5vw,52px);font-weight:900;line-height:1.15;text-wrap:balance}
+.lead{margin:6px 0 0;color:var(--muted);font-size:18px}
+.stickers{background:var(--card);border:2px solid var(--line);border-radius:var(--r-md);padding:10px 16px;min-width:0;max-width:100%}
+.st-top{display:flex;gap:8px;align-items:baseline;font-size:15px;color:var(--muted)}
+#stCount{font-size:24px;color:var(--ink);font-weight:900;font-variant-numeric:tabular-nums}
+#stRow{display:flex;flex-wrap:wrap;gap:2px;max-width:440px;font-size:26px;line-height:1.3}
+#stRow .none{font-size:15px;color:var(--muted)}
+.courses{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.courses li:last-child{grid-column:1/-1}
+@media (max-width:640px){.courses{grid-template-columns:minmax(0,1fr)}}
+.course{width:100%;height:100%;display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:16px;text-align:left;background:var(--card);border:2px solid var(--line);border-radius:var(--r-lg);padding:18px 20px;min-height:112px;transition:transform .12s,border-color .12s}
+.course:hover{border-color:var(--take)}
+.course:active{transform:scale(.98)}
+.c-num{width:48px;height:48px;border-radius:50%;display:grid;place-items:center;background:var(--soft);font-size:24px;font-weight:900}
+.c-name{display:block;font-size:clamp(22px,2.6vw,27px);font-weight:700;line-height:1.3}
+.c-ex{display:block;font-size:17px;color:var(--muted);margin-top:4px}
+.c-ex .eqs{color:var(--ink);margin-right:8px;font-variant-numeric:tabular-nums}
+.c-stars{font-size:26px;letter-spacing:2px;color:var(--line);white-space:nowrap}
+.c-stars .on,.done-stars .on{color:var(--star)}
+.parent-link{margin-top:28px;font-size:16px;color:var(--muted);text-decoration:underline;text-underline-offset:4px;padding:8px 0}
+
+/* play */
+.topbar{display:flex;align-items:center;gap:12px 16px;margin-bottom:16px;flex-wrap:wrap}
+.back{font-size:18px;padding:8px 18px;border-radius:999px;background:var(--card);border:2px solid var(--line);min-height:48px}
+.course-name{font-size:20px;font-weight:700;flex:1;min-width:0}
+.prog{list-style:none;display:flex;gap:8px;margin:0;padding:0}
+.prog li{width:32px;height:32px;border-radius:50%;border:3px solid var(--line);display:grid;place-items:center;font-size:18px;line-height:1;color:var(--star)}
+.prog li.now{border-color:var(--take)}
+.prog li.done{background:var(--soft);border-color:var(--soft)}
+.prog li.star::before{content:"★"}
+.stage{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,6fr);gap:24px;align-items:start}
+.sb-wrap{margin:0;background:var(--card);border-radius:var(--r-lg);border:2px solid var(--line);padding:14px 12px 10px;display:flex;flex-direction:column;align-items:center;gap:6px;min-width:0}
+#sb{display:block;width:100%;max-width:440px;height:auto;max-height:64vh}
+.legend{display:flex;gap:18px;font-size:15px;color:var(--muted)}
+.legend i{display:inline-block;width:14px;height:14px;border-radius:50%;margin-right:6px;vertical-align:-1px}
+@media (max-width:820px),(orientation:portrait){
+  .stage{grid-template-columns:minmax(0,1fr);gap:16px}
+  #sb{max-height:38vh}
+}
+.quiz{display:flex;flex-direction:column;gap:14px;min-width:0}
+.eq-big{font-size:clamp(48px,7vw,76px);font-weight:900;line-height:1;font-variant-numeric:tabular-nums;letter-spacing:.02em}
+.eq-r{color:var(--muted)} .eq-r.ok{color:var(--take)}
+.qrow{display:flex;align-items:center;gap:12px;background:var(--card);border-radius:var(--r-md);padding:12px 14px 12px 18px;border:2px solid var(--line)}
+.q{margin:0;flex:1;min-width:0;font-size:clamp(22px,2.6vw,30px);font-weight:700;line-height:1.4}
+.spk{flex:none;width:52px;height:52px;border-radius:50%;background:var(--soft);display:grid;place-items:center;color:var(--ink)}
+.spk svg{width:26px;height:26px}
+.spk:active{transform:scale(.94)}
+.steps{display:flex;gap:6px;list-style:none;margin:0;padding:0 0 0 4px}
+.steps li{height:8px;width:40px;border-radius:4px;background:var(--line)}
+.steps li.on{background:var(--take)} .steps li.done{background:var(--muted)}
+.choices{display:flex;flex-direction:column;gap:12px}
+.choices.yn{flex-direction:row}
+.choices.yn .opt{flex:1}
+.opt{display:flex;gap:10px;align-items:center}
+.choice{flex:1;min-width:0;min-height:74px;text-align:left;padding:12px 20px;background:var(--card);border:3px solid var(--line);border-radius:var(--r-md);font-size:clamp(22px,2.6vw,30px);font-weight:700;line-height:1.3;transition:transform .1s,border-color .15s,opacity .2s,background .15s}
+.choices.yn .choice{text-align:center}
+.choice:active{transform:scale(.98)}
+.choice.right{border-color:var(--take);background:var(--take-bg)}
+.choice.nope{opacity:.32}
+.hint{background:var(--hint-bg);color:var(--hint);border-radius:var(--r-md);padding:12px 18px;font-size:20px;font-weight:700;display:flex;gap:12px 18px;align-items:center;flex-wrap:wrap}
+.frame{display:grid;grid-template-columns:repeat(5,26px);gap:6px}
+.dot{width:26px;height:26px;border-radius:50%;border:3px dashed currentColor}
+.dot.on{background:var(--muted);border:3px solid var(--muted)}
+.answer{font-size:clamp(26px,3.2vw,38px);font-weight:700;background:var(--card);border-radius:var(--r-md);padding:14px 16px;border:2px solid var(--line);line-height:1.4}
+.answer .pt{border-radius:10px;padding:2px 6px;transition:background .2s}
+.answer .pt.act.take{background:var(--take-bg)} .answer .pt.act.put{background:var(--put-bg)}
+.after{display:flex;gap:12px;flex-wrap:wrap}
+.btn{min-height:64px;padding:10px 30px;border-radius:999px;font-size:24px;font-weight:700;background:var(--card);border:3px solid var(--line)}
+.btn.primary{background:var(--take);border-color:var(--take);color:var(--on-take)}
+.btn:active{transform:scale(.97)}
+
+/* soroban svg */
+.board{fill:var(--board)}
+.frame-r{fill:none;stroke:var(--frame);stroke-width:14}
+.rod{stroke:var(--rod);stroke-width:5;stroke-linecap:round}
+.beam{stroke:var(--beam);stroke-width:6}
+.bead{transition:transform .55s cubic-bezier(.3,.8,.3,1)}
+.still .bead{transition:none}
+.bead .body{fill:var(--bead);stroke:var(--bead);stroke-width:4;stroke-linejoin:round;transition:fill .2s,stroke .2s}
+.bead .shine{fill:none;stroke:var(--shine);stroke-width:3;stroke-linecap:round;opacity:.65}
+.bead.is-take .body{fill:var(--take);stroke:var(--take)}
+.bead.is-put .body{fill:var(--put);stroke:var(--put)}
+.bead.is-take .shine,.bead.is-put .shine{stroke:var(--shine-on);opacity:.45}
+.sb-side{fill:var(--muted);font-size:16px;font-weight:700;font-family:var(--font)}
+.sb-digit{fill:var(--ink);font-size:32px;font-weight:900;font-family:var(--font)}
+.sb-label{fill:var(--muted);font-size:15px;font-weight:700;font-family:var(--font)}
+.hl{fill:none;stroke:var(--hint);stroke-width:4;stroke-dasharray:10 7;opacity:0}
+.hl.on{animation:blink 1s ease-in-out infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.15}}
+
+/* done */
+.done-card{max-width:560px;margin:5vh auto 0;background:var(--card);border-radius:28px;border:2px solid var(--line);padding:32px 24px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:8px}
+.done-title{font-size:48px;font-weight:900;margin:0;line-height:1.2}
+.done-stars{font-size:56px;letter-spacing:6px;color:var(--line);line-height:1.2}
+.done-stars span{display:inline-block}
+.done-stars .on{animation:pop .5s backwards}
+.sticker-new{font-size:96px;line-height:1.15;animation:pop .6s .6s backwards}
+#dMsg{margin:0;font-size:20px}
+.done-btns{display:flex;gap:12px;flex-wrap:wrap;justify-content:center;margin-top:12px}
+@keyframes pop{0%{transform:scale(0)}70%{transform:scale(1.2)}100%{transform:scale(1)}}
+
+/* parent */
+.p-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;font-size:16px}
+@media (max-width:760px){.p-grid{grid-template-columns:minmax(0,1fr)}}
+.panel{background:var(--card);border:2px solid var(--line);border-radius:var(--r-md);padding:18px 20px;min-width:0}
+.panel.wide{grid-column:1/-1}
+.panel h2{margin:0 0 8px;font-size:19px;font-weight:700}
+.panel p{margin:0 0 8px}
+.set-row{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:10px 0;border-top:1px solid var(--line)}
+.set-row:first-of-type{border-top:0}
+select{font:inherit;font-size:16px;padding:6px 10px;border-radius:10px;border:2px solid var(--line);background:var(--bg);color:var(--ink)}
+input[type=checkbox]{width:26px;height:26px;accent-color:var(--take)}
+.weak{list-style:none;margin:0;padding:0}
+.weak li{display:flex;justify-content:space-between;gap:12px;padding:8px 0;border-top:1px solid var(--line);font-variant-numeric:tabular-nums}
+.weak li:first-child{border-top:0}
+.weak li>span:last-child{white-space:nowrap}
+.weak .w-ph{color:var(--muted);font-size:15px}
+.rule{display:grid;grid-template-columns:96px minmax(0,1fr);gap:12px;padding:10px 0;border-top:1px solid var(--line)}
+.rule-n{font-weight:700}
+.rule p{margin:0 0 4px}
+.rule-ph{font-weight:700;margin-right:10px}
+.rule-list{color:var(--muted);font-variant-numeric:tabular-nums}
+.small-btn{font-size:16px;padding:8px 18px;border-radius:999px;border:2px solid var(--line);background:var(--bg)}
+.small-btn.danger{border-color:var(--put);color:var(--put)}
+.confirm{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:10px}
+details summary{cursor:pointer;font-weight:700;font-size:19px}
+
+@media (prefers-reduced-motion: reduce){
+  .bead{transition-duration:.15s}
+  .hl.on{animation:none;opacity:1}
+  .done-stars .on,.sticker-new{animation:none}
+}
+</style>
+</head>
+<body>
+<div class="app">
+
+<section id="home">
+  <header class="home-head">
+    <div>
+      <h1>そろばんクイズ</h1>
+      <p class="lead">そろばんを よく みて、こたえを えらぼう</p>
+    </div>
+    <div class="stickers">
+      <div class="st-top">シール <span id="stCount">0</span>まい</div>
+      <div id="stRow"></div>
+    </div>
+  </header>
+  <div class="modes" role="group" aria-label="けいさんの しゅるい">
+    <button class="mode" id="modeAdd" type="button" aria-pressed="true">たしざん</button>
+    <button class="mode" id="modeSub" type="button" aria-pressed="false">ひきざん</button>
+  </div>
+  <ol class="courses" id="courses"></ol>
+  <button class="parent-link" id="toParent" type="button">おうちのかたへ（設定・にがてな問題）</button>
+</section>
+
+<section id="play" hidden>
+  <div class="topbar">
+    <button class="back" id="back" type="button">← もどる</button>
+    <span class="course-name" id="pName"></span>
+    <ol class="prog" id="prog" aria-label="すすみぐあい"></ol>
+  </div>
+  <div class="stage">
+    <figure class="sb-wrap">
+      <svg id="sb" class="still" viewBox="0 0 360 336" role="img" aria-label="そろばん">
+        <rect class="board" x="70" y="12" width="280" height="258" rx="18"/>
+        <line class="rod" x1="145" y1="19" x2="145" y2="263"/>
+        <line class="rod" x1="275" y1="19" x2="275" y2="263"/>
+        <line class="beam" x1="70" y1="102" x2="350" y2="102"/>
+        <rect class="frame-r" x="70" y="12" width="280" height="258" rx="18"/>
+        <text class="sb-side" x="36" y="62" text-anchor="middle">5だま</text>
+        <text class="sb-side" x="36" y="172" text-anchor="middle">1だま</text>
+        <g id="beads"></g>
+        <rect id="hl5" class="hl" x="217" y="27" width="116" height="72" rx="14"/>
+        <rect id="hl1" class="hl" x="217" y="105" width="116" height="160" rx="14"/>
+        <text id="dt" class="sb-digit" x="145" y="306" text-anchor="middle">0</text>
+        <text id="do" class="sb-digit" x="275" y="306" text-anchor="middle">0</text>
+        <text class="sb-label" x="145" y="328" text-anchor="middle">じゅうの くらい</text>
+        <text class="sb-label" x="275" y="328" text-anchor="middle">いちの くらい</text>
+      </svg>
+      <div class="legend"><span><i style="background:var(--take)"></i>とる</span><span><i style="background:var(--put)"></i>いれる</span></div>
+    </figure>
+    <div class="quiz">
+      <div class="eq-big"><span id="eqA">5</span> <span id="eqOp">+</span> <span id="eqN">9</span> <span id="eqR" class="eq-r">= ?</span></div>
+      <div class="qrow">
+        <p class="q" id="q"></p>
+        <button class="spk" id="qSpk" type="button" aria-label="もんだいを よむ"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4z" fill="currentColor"/><path d="M16 8.5a5 5 0 0 1 0 7M18.5 6a8.5 8.5 0 0 1 0 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>
+      </div>
+      <ol class="steps" id="steps" aria-hidden="true"></ol>
+      <div class="choices" id="choices"></div>
+      <div class="hint" id="hint" hidden></div>
+      <div class="answer" id="answer" hidden></div>
+      <div class="after" id="after" hidden>
+        <button class="btn primary" id="next" type="button">つぎへ</button>
+        <button class="btn" id="replay" type="button">もういちど みる</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="done" hidden>
+  <div class="done-card">
+    <p class="done-title">できた！</p>
+    <div class="done-stars" id="dStars"></div>
+    <p id="dMsg"></p>
+    <div class="sticker-new" id="dSticker"></div>
+    <p class="muted">シールを 1まい ゲット！</p>
+    <div class="done-btns">
+      <button class="btn primary" id="again" type="button">もういちど</button>
+      <button class="btn" id="toHome" type="button">コースを えらぶ</button>
+    </div>
+  </div>
+</section>
+
+<section id="parent" hidden>
+  <div class="topbar">
+    <button class="back" id="pBack" type="button">← もどる</button>
+    <span class="course-name">おうちのかたへ</span>
+  </div>
+  <div class="p-grid">
+    <div class="panel">
+      <h2>設定</h2>
+      <label class="set-row" for="setVoice"><span>読み上げ</span><input type="checkbox" id="setVoice"></label>
+      <label class="set-row" for="setRate"><span>読み上げの速さ</span>
+        <select id="setRate"><option value="0.75">ゆっくり</option><option value="0.9">ふつう</option><option value="1.05">はやい</option></select></label>
+      <label class="set-row" for="setSound"><span>効果音</span><input type="checkbox" id="setSound"></label>
+      <label class="set-row" for="setChoices"><span>選択肢の数</span>
+        <select id="setChoices"><option value="2">2つ</option><option value="3">3つ</option></select></label>
+    </div>
+    <div class="panel">
+      <h2>にがてな問題</h2>
+      <ul class="weak" id="weak"></ul>
+    </div>
+    <div class="panel wide">
+      <h2>このアプリの考え方</h2>
+      <p>「たせない9は 1とって10いれる」のような言い方は1つの決まりで、5+9 などの例外は「とりたい1だまが足りない」ときだけ起きます。ひき算も同じで、14−9 などの例外は「いれたい1だまが、もういっぱいで入らない」ときだけです。</p>
+      <p>コース3・4・5では、答えを選ぶ前に「1だま、とれる？（ひき算は、いれられる？）」「5だま、いれられる？（ひき算は、とれる？）」と、そろばんを見て判断する問題を出します。組み合わせを暗記しなくても、目で見て正しい言い方を選べるようにするためです。</p>
+      <p class="muted">まちがえた問題は、次から少し多めに出ます。記録はこのiPadのブラウザの中だけに保存されます。</p>
+    </div>
+    <div class="panel wide">
+      <details>
+        <summary>出題する問題と言い方の一覧</summary>
+        <div id="rules"></div>
+      </details>
+    </div>
+    <div class="panel wide">
+      <h2>記録のリセット</h2>
+      <p class="muted">シール・星・にがてな問題の記録を消します。設定はそのままです。</p>
+      <button class="small-btn danger" id="reset" type="button">記録を消す</button>
+      <div class="confirm" id="resetConfirm" hidden>
+        <span>本当に消しますか？</span>
+        <button class="small-btn danger" id="resetYes" type="button">消す</button>
+        <button class="small-btn" id="resetNo" type="button">やめる</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+</div>
+
+<script>
+/*RULES-START*/
+const KANA={1:'いち',2:'に',3:'さん',4:'よん',5:'ご',6:'ろく',7:'なな',8:'はち',9:'きゅう',10:'じゅう'};
+const KO={1:'いっこ',2:'にこ',3:'さんこ',4:'よんこ'};
+const readNum=v=>v<=10?KANA[v]:'じゅう'+KANA[v-10];
+
+// Addition a + n on one rod (a = 1..9, tens rod empty).
+// 'direct' = can add as is, 'five' = 5のともだち, 'ten' = 10のともだち,
+// 'tenfive' = 10のともだち but the 1だま to take are missing, so the 5だま is used (5+9 etc.)
+function classifyAdd(a,n){
+  if(a+n>=10){
+    const k=10-n, f=a>=5, c=a%5;
+    return (k<5 ? c>=k : (f && c>=k-5)) ? 'ten' : 'tenfive';
+  }
+  if(n<5 && a%5+n>4) return 'five';
+  return 'direct';
+}
+// Subtraction m − n (m = 1..18, so the tens rod holds at most 1).
+// 'sfive' = 5のともだち, 'sten' = 10のともだち,
+// 'stenfive' = 10のともだち but there is no room for the 1だま to put in, so the 5だま is used (14−9 etc.)
+function classifySub(m,n){
+  const u=m%10, f=u>=5, c=u%5;
+  if(u>=n) return (n<5 ? c>=n : (f && c>=n-5)) ? 'direct' : 'sfive';
+  if(m<10) return 'negative';
+  const k=10-n;
+  return (k<5 ? c+k<=4 : (!f && c+k-5<=4)) ? 'sten' : 'stenfive';
+}
+const P=(op,k,text,speech)=>({op,k,text,speech});
+// Wording follows the classroom notes exactly.
+// Spoken strings write the particle は as わ, because the speech engine reads は as "ha".
+const PHRASES={
+  five:x=>[P('take',x,x+'とって',KANA[x]+' とって'),P('put',5,'5いれる','ご いれる')],
+  ten:x=>[P('take',x,x+'とって',KANA[x]+' とって'),P('put',10,'10いれる','じゅう いれる')],
+  tenfive:x=>[P('put',x,x+'をいれて',KANA[x]+'を いれて'),P('take',5,'5をとって、','ごを とって'),P('put',10,'10いれる','じゅう いれる')],
+  sfive:x=>[P('take',5,'5とって','ご とって'),P('put',x,x+'いれる',KANA[x]+' いれる')],
+  sten:x=>[P('take',10,'10とって','じゅう とって'),P('put',x,x+'いれる',KANA[x]+' いれる')],
+  stenfive:x=>[P('take',10,'10とって','じゅう とって'),P('put',5,'5をいれて','ごを いれて'),P('take',x,x+'をとる',KANA[x]+'を とる')],
+};
+function phrase(kind,x){return {kind,x,key:kind+x,parts:PHRASES[kind](x)};}
+function finalPhrase(p){
+  const x={five:5-p.n,ten:10-p.n,tenfive:p.n-5,sfive:5-p.n,sten:10-p.n,stenfive:p.n-5}[p.kind];
+  return phrase(p.kind,x);
+}
+const phraseText=ph=>ph.parts.map(p=>p.text).join('');
+const resultOf=p=>p.op==='add'?p.a+p.n:p.a-p.n;
+// rods: {t:{f,c},o:{f,c}} — f = 5だま in (0/1), c = 1だま in (0..4)
+function initRods(v){const d=Math.floor(v/10),u=v%10;return {t:{f:d>=5?1:0,c:d%5},o:{f:u>=5?1:0,c:u%5}};}
+function applyOp(st,op){
+  const s={t:{...st.t},o:{...st.o}}, sign=op.op==='put'?1:-1;
+  if(op.k===10){s.t.c+=sign;return s;}
+  if(op.k===5) s.o.f+=sign;
+  else if(op.k<5) s.o.c+=sign*op.k;
+  else {s.o.f+=sign;s.o.c+=sign*(op.k-5);}
+  return s;
+}
+const ALL=[];
+for(let a=1;a<=9;a++)for(let n=1;n<=9;n++){const kind=classifyAdd(a,n);if(kind!=='direct')ALL.push({op:'add',a,n,kind,key:a+'+'+n});}
+// 5のともだち in subtraction uses one-digit numbers only, as in the classroom notes (5−4, 6−3 …)
+for(let m=1;m<=18;m++)for(let n=1;n<=9;n++){const kind=classifySub(m,n);if(kind==='sten'||kind==='stenfive'||(kind==='sfive'&&m<10))ALL.push({op:'sub',a:m,n,kind,key:m+'-'+n});}
+/*RULES-END*/
+
+const NS='http://www.w3.org/2000/svg';
+const $=id=>document.getElementById(id);
+const wait=ms=>new Promise(r=>setTimeout(r,ms));
+const reduced=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
+const shuffle=a=>{for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;};
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const ROUND=5;
+const STICKERS=['🐶','🐱','🐰','🐻','🐼','🐨','🐯','🦁','🐸','🐵','🐧','🐤','🦊','🐮','🐷','🐙','🦄','🐳','🦒','🐢','🍎','🍓','🍙','🌻','🚗','🚀','🚂','🌈','🎈','⭐'];
+const KIND_LABEL={five:'5のともだち',ten:'10のともだち',tenfive:'5だまを つかう',sfive:'5のともだち',sten:'10のともだち',stenfive:'5だまを つかう'};
+const SIGN={add:'+',sub:'−'};
+
+const LEVELS=[
+  {id:'l1',mode:'add',num:1,name:'5の ともだち',ex:'<span class="eqs">4 + 1</span>',exPh:phrase('five',1),filter:p=>p.kind==='five'},
+  {id:'l2',mode:'add',num:2,name:'10の ともだち',ex:'<span class="eqs">3 + 9</span>',exPh:phrase('ten',1),filter:p=>p.kind==='ten'},
+  {id:'l3',mode:'add',num:3,name:'5だまに ちゅうい',ex:'<span class="eqs">5 + 9</span>',exPh:phrase('tenfive',4),filter:p=>p.op==='add'&&p.n>=6,boost:p=>p.kind==='tenfive'?2:1,look1:true},
+  {id:'l4',mode:'add',num:4,name:'5かな？ 10かな？',ex:'<span class="eqs">3 + 4</span><span class="eqs">7 + 4</span>どっちの いいかた？',filter:p=>p.op==='add'&&p.n<=4,look5:true},
+  {id:'l5',mode:'add',num:5,name:'ぜんぶ',ex:'たしざん ぜんぶ まぜて れんしゅう',filter:p=>p.op==='add',look1:true,look5:true},
+  {id:'m1',mode:'sub',num:1,name:'5の ともだち',ex:'<span class="eqs">6 − 4</span>',exPh:phrase('sfive',1),filter:p=>p.kind==='sfive'},
+  {id:'m2',mode:'sub',num:2,name:'10の ともだち',ex:'<span class="eqs">12 − 9</span>',exPh:phrase('sten',1),filter:p=>p.kind==='sten'},
+  {id:'m3',mode:'sub',num:3,name:'5だまに ちゅうい',ex:'<span class="eqs">14 − 9</span>',exPh:phrase('stenfive',4),filter:p=>p.op==='sub'&&p.n>=6,boost:p=>p.kind==='stenfive'?2:1,look1:true},
+  {id:'m4',mode:'sub',num:4,name:'5かな？ 10かな？',ex:'<span class="eqs">6 − 4</span><span class="eqs">12 − 4</span>どっちの いいかた？',filter:p=>p.op==='sub'&&p.n<=4,look5:true},
+  {id:'m5',mode:'sub',num:5,name:'ぜんぶ',ex:'ひきざん ぜんぶ まぜて れんしゅう',filter:p=>p.op==='sub',look1:true,look5:true},
+];
+
+/* ---------- storage (this browser only) ---------- */
+const KEY='soroban-tashizan-v1';
+let store={mode:'add',stats:{},stars:{},stickers:[],settings:{voice:true,sound:true,choices:3,rate:0.9}};
+try{const s=JSON.parse(localStorage.getItem(KEY));if(s)store={...store,...s,settings:{...store.settings,...(s.settings||{})}};}catch(e){}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(store));}catch(e){}}
+
+/* ---------- sound + speech ---------- */
+let ac=null;
+function unlockAudio(){try{ac=ac||new (window.AudioContext||window.webkitAudioContext)();if(ac.state==='suspended')ac.resume();}catch(e){}}
+function tone(kind){
+  if(!store.settings.sound||!ac)return;
+  const seq={ok:[[880,0],[1318,.11]],ng:[[392,0],[330,.14]],fan:[[784,0],[988,.12],[1175,.24],[1568,.36]]}[kind];
+  const type=kind==='ng'?'triangle':'sine', vol=kind==='ng'?.08:.14;
+  try{const t=ac.currentTime;for(const [f,dt] of seq){const o=ac.createOscillator(),g=ac.createGain();o.type=type;o.frequency.value=f;g.gain.setValueAtTime(.0001,t+dt);g.gain.exponentialRampToValueAtTime(vol,t+dt+.02);g.gain.exponentialRampToValueAtTime(.0001,t+dt+.3);o.connect(g);g.connect(ac.destination);o.start(t+dt);o.stop(t+dt+.35);}}catch(e){}
+}
+const synth=('speechSynthesis' in window)?window.speechSynthesis:null;
+let jaVoice=null;
+function pickVoice(){if(!synth)return;try{const vs=synth.getVoices();jaVoice=vs.find(v=>/^ja/i.test(v.lang)&&/Kyoko|O-ren|Otoya|Hattori/.test(v.name))||vs.find(v=>/^ja/i.test(v.lang))||null;}catch(e){}}
+if(synth){pickVoice();synth.onvoiceschanged=pickVoice;}
+function stopSpeech(){try{synth&&synth.cancel();}catch(e){}}
+function speak(text){
+  return new Promise(res=>{
+    if(!synth||!store.settings.voice){setTimeout(res,250);return;}
+    let done=false;const fin=()=>{if(!done){done=true;res();}};
+    try{synth.cancel();const u=new SpeechSynthesisUtterance(text);u.lang='ja-JP';if(jaVoice)u.voice=jaVoice;u.rate=store.settings.rate;u.pitch=1.05;u.onend=fin;u.onerror=fin;synth.speak(u);}catch(e){fin();}
+    setTimeout(fin,800+text.length*220/store.settings.rate);
+  });
+}
+const SPK_SVG='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4z" fill="currentColor"/><path d="M16 8.5a5 5 0 0 1 0 7M18.5 6a8.5 8.5 0 0 1 0 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>';
+function spkButton(fn,label){const b=document.createElement('button');b.type='button';b.className='spk';b.setAttribute('aria-label',label);b.innerHTML=SPK_SVG;b.addEventListener('click',()=>{unlockAudio();fn();});return b;}
+
+/* ---------- soroban drawing ---------- */
+const RX={t:145,o:275};
+const layer=$('beads');
+function svgEl(tag,attrs,parent){const e=document.createElementNS(NS,tag);for(const k in attrs)e.setAttribute(k,attrs[k]);parent.appendChild(e);return e;}
+function makeBead(){const g=svgEl('g',{class:'bead'},layer);svgEl('path',{class:'body',d:'M-44 0 L-19 -14 L19 -14 L44 0 L19 14 L-19 14 Z'},g);svgEl('path',{class:'shine',d:'M-30 -5.5 L-16 -9.5 L16 -9.5 L30 -5.5'},g);return g;}
+const B={};for(const r of ['t','o'])B[r]={h:makeBead(),e:[makeBead(),makeBead(),makeBead(),makeBead()]};
+let rods=initRods(0);
+const place=(g,x,y)=>{g.style.transform=`translate(${x}px,${y}px)`;};
+function draw(){
+  for(const r of ['t','o']){
+    const s=rods[r];
+    place(B[r].h,RX[r],s.f?82:48);
+    B[r].e.forEach((g,i)=>place(g,RX[r],i<s.c?122+27*i:162+27*i));
+    $('d'+r).textContent=s.f*5+s.c;
+  }
+}
+function unpaint(){layer.querySelectorAll('.bead').forEach(g=>g.classList.remove('is-take','is-put'));}
+function movedBeads(a,b){
+  const list=[];
+  for(const r of ['t','o']){
+    if(a[r].f!==b[r].f)list.push(B[r].h);
+    for(let i=Math.min(a[r].c,b[r].c);i<Math.max(a[r].c,b[r].c);i++)list.push(B[r].e[i]);
+  }
+  return list;
+}
+draw();
+requestAnimationFrame(()=>requestAnimationFrame(()=>$('sb').classList.remove('still')));
+
+/* ---------- quiz building ---------- */
+function validX(kind,x){return kind==='ten'||kind==='sten'?x>=1&&x<=9:x>=1&&x<=4;}
+function neighbors(kind,x){return [x+1,x-1,x+2,x-2].filter(v=>validX(kind,v));}
+function phraseHTML(ph){return ph.parts.map(p=>{const m=p.text.match(/^(\d+)(.*)$/);return `<span class="pt ${p.op}"><b>${m[1]}</b>${esc(m[2])}</span>`;}).join('');}
+const speechOf=ph=>ph.parts.map(p=>p.speech).join('、');
+const askPhrase=(q,speech,correct,distractors)=>({type:'phrase',q,speech,correct,distractors});
+const askYesNo=(q,speech,labels,ok,hint)=>({type:'yesno',q,speech,options:labels.map((label,i)=>({label,correct:i===ok,h:{hint}}))});
+
+function buildSteps(p,lv){return p.op==='sub'?buildSubSteps(p,lv):buildAddSteps(p,lv);}
+function buildAddSteps(p,lv){
+  const {a,n,kind}=p, k=10-n, steps=[];
+  if(lv.look5&&n<=4) steps.push(askYesNo('5だまを いれられる？','ごだまを いれられる？',['いれられる','いれられない'],a<5?0:1,'look5'));
+  const q=`たせない ${n} は？`, qs=`たせない ${KANA[n]}わ？`;
+  if(kind==='five'){
+    const d=[];
+    if(lv.look5) d.push({ph:phrase('ten',k),hint:'look5'});
+    neighbors('five',5-n).forEach(x=>d.push({ph:phrase('five',x),hint:'p5',m:n}));
+    steps.push(askPhrase(q,qs,phrase('five',5-n),d));
+    return steps;
+  }
+  const d=[];
+  if(lv.look5&&n<=4) d.push({ph:phrase('five',5-n),hint:'look5'});
+  neighbors('ten',k).forEach(x=>d.push({ph:phrase('ten',x),hint:'p10',m:n}));
+  steps.push(askPhrase(q,qs,phrase('ten',k),d));
+  if(n>=6&&(lv.look1||kind==='tenfive')){
+    const can=kind==='ten';
+    steps.push(askYesNo(`いちの 1だまを ${k}こ とれる？`,`いちだまを ${KO[k]} とれる？`,['とれる','とれない'],can?0:1,'look1'));
+    if(!can){
+      const d2=[{ph:phrase('ten',k),hint:'short',m:k}];
+      neighbors('tenfive',n-5).forEach(x=>d2.push({ph:phrase('tenfive',x),hint:'p5',m:k}));
+      steps.push(askPhrase('1だまが たりない！ どうする？','いちだまが たりない！ どうする？',phrase('tenfive',n-5),d2));
+    }
+  }
+  return steps;
+}
+// Same three-stage shape as addition: rule → look at the rod → exception wording.
+function buildSubSteps(p,lv){
+  const {a,n,kind}=p, k=10-n, u=a%10, steps=[];
+  if(lv.look5&&n<=4) steps.push(askYesNo('5だまを とれる？','ごだまを とれる？',['とれる','とれない'],u>=5?0:1,'look5s'));
+  const q=`ひけない ${n} は？`, qs=`ひけない ${KANA[n]}わ？`;
+  if(kind==='sfive'){
+    const d=[];
+    if(lv.look5) d.push({ph:phrase('sten',k),hint:'look5s'});
+    neighbors('sfive',5-n).forEach(x=>d.push({ph:phrase('sfive',x),hint:'p5',m:n}));
+    steps.push(askPhrase(q,qs,phrase('sfive',5-n),d));
+    return steps;
+  }
+  const d=[];
+  if(lv.look5&&n<=4) d.push({ph:phrase('sfive',5-n),hint:'look5s'});
+  neighbors('sten',k).forEach(x=>d.push({ph:phrase('sten',x),hint:'p10',m:n}));
+  steps.push(askPhrase(q,qs,phrase('sten',k),d));
+  if(n>=6&&(lv.look1||kind==='stenfive')){
+    const can=kind==='sten';
+    steps.push(askYesNo(`いちの 1だまを ${k}こ いれられる？`,`いちだまを ${KO[k]} いれられる？`,['いれられる','いれられない'],can?0:1,'look1s'));
+    if(!can){
+      const d2=[{ph:phrase('sten',k),hint:'full',m:k}];
+      neighbors('stenfive',n-5).forEach(x=>d2.push({ph:phrase('stenfive',x),hint:'p5',m:k}));
+      steps.push(askPhrase('1だまが いれられない！ どうする？','いちだまが いれられない！ どうする？',phrase('stenfive',n-5),d2));
+    }
+  }
+  return steps;
+}
+function hintFor(d){
+  const m=d.m;
+  switch(d.hint){
+    case 'p10':return {text:`${m} と あわせて 10 に なる かずは？`,speech:`${KANA[m]}と あわせて じゅうに なる かずわ？`,frame:[10,m]};
+    case 'p5':return {text:`${m} と あわせて 5 に なる かずは？`,speech:`${KANA[m]}と あわせて ごに なる かずわ？`,frame:[5,m]};
+    case 'look5':return {text:'5だまを みてね。いれられるかな？',speech:'ごだまを みてね。いれられるかな？',hl:'hl5'};
+    case 'look1':return {text:'いちの 1だまを かぞえてみよう',speech:'いちだまを かぞえてみよう',hl:'hl1'};
+    case 'short':return {text:`1だまが たりないから ${m}とれないね`,speech:`いちだまが たりないから ${KANA[m]} とれないね`,hl:'hl1'};
+    case 'look5s':return {text:'5だまを みてね。とれるかな？',speech:'ごだまを みてね。とれるかな？',hl:'hl5'};
+    case 'look1s':return {text:'したに いる 1だまを かぞえてみよう',speech:'したに いる いちだまを かぞえてみよう',hl:'hl1'};
+    case 'full':return {text:`1だまが いっぱいで ${m}いれられないね`,speech:`いちだまが いっぱいで ${KANA[m]} いれられないね`,hl:'hl1'};
+  }
+}
+function frameHTML(total,m){let s='<div class="frame" aria-hidden="true">';for(let i=0;i<total;i++)s+=`<span class="dot${i<m?' on':''}"></span>`;return s+'</div>';}
+function showHint(h){const el=$('hint');el.innerHTML=`<span>${esc(h.text)}</span>`+(h.frame?frameHTML(h.frame[0],h.frame[1]):'');el.hidden=false;hideHl();if(h.hl)$(h.hl).classList.add('on');}
+function hideHl(){$('hl5').classList.remove('on');$('hl1').classList.remove('on');}
+function hideHint(){$('hint').hidden=true;hideHl();}
+
+function missOf(p){return (store.stats[p.key]||{}).miss||0;}
+function pickRound(lv){
+  const pool=ALL.filter(lv.filter).map(p=>({p,w:(lv.boost?lv.boost(p):1)*(1+2*Math.min(missOf(p),3))}));
+  const out=[];
+  while(out.length<ROUND&&pool.length){
+    let r=Math.random()*pool.reduce((s,x)=>s+x.w,0),i=0;
+    for(;i<pool.length-1;i++){r-=pool[i].w;if(r<=0)break;}
+    out.push(pool[i].p);pool.splice(i,1);
+  }
+  return out;
+}
+
+/* ---------- play ---------- */
+const S={lv:null,lvIdx:0,queue:[],idx:0,prob:null,steps:[],si:0,first:true,locked:false,recorded:false,results:[],token:0};
+
+function showScreen(id){for(const s of ['home','play','done','parent'])$(s).hidden=s!==id;window.scrollTo(0,0);}
+function startRound(i){
+  unlockAudio();
+  S.lvIdx=i;S.lv=LEVELS[i];S.queue=pickRound(S.lv);S.idx=0;S.results=[];
+  $('pName').textContent=`${S.lv.mode==='sub'?'ひきざん':'たしざん'} ${S.lv.num}. ${S.lv.name}`;
+  showScreen('play');nextProblem();
+}
+function renderProg(){
+  const ol=$('prog');ol.innerHTML='';
+  for(let i=0;i<ROUND;i++){const li=document.createElement('li');if(i<S.results.length&&S.results[i]!==undefined)li.className=S.results[i]?'done star':'done';else if(i===S.idx)li.className='now';ol.appendChild(li);}
+}
+function nextProblem(){
+  const p=S.queue[S.idx];
+  S.prob=p;S.steps=buildSteps(p,S.lv);S.si=0;S.first=true;S.locked=false;S.recorded=false;S.token++;
+  unpaint();rods=initRods(p.a);draw();
+  $('eqA').textContent=p.a;$('eqOp').textContent=SIGN[p.op];$('eqN').textContent=p.n;
+  const r=$('eqR');r.textContent='= ?';r.classList.remove('ok');
+  $('answer').hidden=true;$('after').hidden=true;
+  renderProg();renderStep();
+  speak(`${readNum(p.a)} ${p.op==='sub'?'ひく':'たす'} ${KANA[p.n]}。 ${S.steps[0].speech}`);
+}
+function renderStep(){
+  const st=S.steps[S.si];
+  $('q').textContent=st.q;hideHint();
+  const sd=$('steps');sd.innerHTML='';sd.hidden=S.steps.length<2;
+  S.steps.forEach((_,i)=>{const li=document.createElement('li');li.className=i<S.si?'done':i===S.si?'on':'';sd.appendChild(li);});
+  const box=$('choices');box.innerHTML='';box.hidden=false;box.className='choices'+(st.type==='yesno'?' yn':'');
+  let opts;
+  if(st.type==='phrase'){
+    const n=Math.max(1,store.settings.choices-1);
+    opts=shuffle([{ph:st.correct,correct:true},...st.distractors.slice(0,n).map(d=>({ph:d.ph,correct:false,h:d}))]);
+  }else opts=st.options;
+  for(const o of opts){
+    const row=document.createElement('div');row.className='opt';
+    if(o.ph)row.appendChild(spkButton(()=>speak(speechOf(o.ph)),'この こたえを よむ'));
+    const b=document.createElement('button');b.type='button';b.className='choice';
+    b.innerHTML=o.ph?phraseHTML(o.ph):esc(o.label);
+    b.addEventListener('click',()=>choose(o,b));
+    row.appendChild(b);box.appendChild(row);
+  }
+}
+function choose(o,b){
+  unlockAudio();
+  if(S.locked||b.classList.contains('nope'))return;
+  if(o.correct){
+    S.locked=true;b.classList.add('right');tone('ok');hideHint();
+    const tk=S.token;
+    setTimeout(()=>{
+      if(tk!==S.token)return;
+      S.si++;S.locked=false;
+      if(S.si<S.steps.length){renderStep();speak(S.steps[S.si].speech);}else finishProblem();
+    },550);
+  }else{
+    S.first=false;b.classList.add('nope');b.setAttribute('aria-disabled','true');tone('ng');
+    const h=hintFor(o.h);showHint(h);speak('おしい！ '+h.speech);
+  }
+}
+async function playAnswer(tk){
+  const ph=finalPhrase(S.prob),ans=$('answer');
+  ans.innerHTML=phraseHTML(ph);ans.hidden=false;
+  const spans=ans.querySelectorAll('.pt');
+  for(let i=0;i<ph.parts.length;i++){
+    if(tk!==S.token)return;
+    spans.forEach((s,j)=>s.classList.toggle('act',j===i));
+    const part=ph.parts[i],sp=speak(part.speech),next=applyOp(rods,part);
+    movedBeads(rods,next).forEach(g=>g.classList.add(part.op==='take'?'is-take':'is-put'));
+    await wait(reduced?150:500);if(tk!==S.token)return;
+    rods=next;draw();
+    await Promise.all([sp,wait(reduced?350:900)]);
+  }
+  spans.forEach(s=>s.classList.remove('act'));
+}
+function showResult(){
+  const p=S.prob,r=$('eqR');
+  r.textContent='= '+resultOf(p);r.classList.add('ok');
+  $('next').textContent=S.idx>=ROUND-1?'おわり':'つぎへ';
+  $('after').hidden=false;
+}
+async function finishProblem(){
+  S.locked=true;const p=S.prob,tk=S.token;
+  $('choices').hidden=true;hideHint();
+  $('steps').querySelectorAll('li').forEach(li=>li.className='done');
+  $('q').textContent='そろばんで やってみよう';
+  if(!S.recorded){
+    S.recorded=true;S.results[S.idx]=S.first;
+    const s=store.stats[p.key]||{seen:0,miss:0};
+    s.seen++;s.miss=S.first?Math.max(0,s.miss-1):Math.min(5,s.miss+1);
+    store.stats[p.key]=s;save();renderProg();
+  }
+  await playAnswer(tk);
+  if(tk!==S.token)return;
+  const msg=S.first?'せいかい！ すごいね':'できたね！';
+  $('q').textContent=msg;tone('ok');speak(msg);
+  showResult();
+}
+async function replay(){
+  unlockAudio();
+  S.token++;const tk=S.token;
+  $('after').hidden=true;unpaint();rods=initRods(S.prob.a);draw();
+  const r=$('eqR');r.textContent='= ?';r.classList.remove('ok');
+  $('q').textContent='もういちど みてみよう';
+  await wait(800);if(tk!==S.token)return;
+  await playAnswer(tk);if(tk!==S.token)return;
+  $('q').textContent=S.first?'せいかい！ すごいね':'できたね！';
+  showResult();
+}
+function showDone(){
+  const n=S.results.filter(Boolean).length,stars=n===ROUND?3:n>=3?2:1;
+  store.stars[S.lv.id]=Math.max(store.stars[S.lv.id]||0,stars);
+  const st=STICKERS[Math.floor(Math.random()*STICKERS.length)];
+  store.stickers.push(st);save();
+  $('dStars').innerHTML=[0,1,2].map(i=>`<span class="${i<stars?'on':''}" style="animation-delay:${i*0.18}s">★</span>`).join('');
+  $('dMsg').textContent=`${ROUND}もん ちゅう ${n}もん いっかいで せいかい`;
+  $('dSticker').textContent=st;
+  showScreen('done');tone('fan');speak('できた！ シールを ゲット！');
+}
+
+/* ---------- home + parent ---------- */
+function renderHome(){
+  const mode=store.mode==='sub'?'sub':'add';
+  $('modeAdd').setAttribute('aria-pressed',String(mode==='add'));
+  $('modeSub').setAttribute('aria-pressed',String(mode==='sub'));
+  const ol=$('courses');ol.innerHTML='';
+  LEVELS.forEach((lv,i)=>{
+    if(lv.mode!==mode)return;
+    const s=store.stars[lv.id]||0,li=document.createElement('li');
+    li.innerHTML=`<button class="course" type="button"><span class="c-num">${lv.num}</span><span class="c-body"><span class="c-name">${lv.name}</span><span class="c-ex">${lv.ex}${lv.exPh?phraseHTML(lv.exPh):''}</span></span><span class="c-stars" aria-label="ほし ${s}こ">${[0,1,2].map(j=>`<span class="${j<s?'on':''}">★</span>`).join('')}</span></button>`;
+    li.querySelector('button').addEventListener('click',()=>startRound(i));
+    ol.appendChild(li);
+  });
+  $('stCount').textContent=store.stickers.length;
+  const row=$('stRow');
+  row.innerHTML=store.stickers.length?store.stickers.slice(-24).map(s=>`<span>${s}</span>`).join(''):'<span class="none">クイズを 5もん やると もらえるよ</span>';
+}
+function showHome(){S.token++;stopSpeech();renderHome();showScreen('home');}
+function renderParent(){
+  $('setVoice').checked=store.settings.voice;$('setSound').checked=store.settings.sound;
+  $('setChoices').value=String(store.settings.choices);$('setRate').value=String(store.settings.rate);
+  const weak=ALL.map(p=>({p,m:missOf(p),seen:(store.stats[p.key]||{}).seen||0})).filter(x=>x.m>0).sort((a,b)=>b.m-a.m).slice(0,12);
+  $('weak').innerHTML=weak.length?weak.map(({p,m})=>`<li><span><b>${p.a} ${SIGN[p.op]} ${p.n}</b>　<span class="w-ph">${esc(phraseText(finalPhrase(p)))}（${KIND_LABEL[p.kind]}）</span></span><span>まちがい ${m}</span></li>`).join(''):'<li class="muted">まだ記録がありません。まちがえた問題がここに表示されます。</li>';
+  let h='';
+  for(const op of ['add','sub']){
+    h+=`<h3 class="rules-h">${op==='add'?'たし算':'ひき算'}</h3>`;
+    for(let n=9;n>=1;n--){
+      const groups=new Map();
+      ALL.filter(p=>p.op===op&&p.n===n).forEach(p=>{const t=phraseText(finalPhrase(p));if(!groups.has(t))groups.set(t,[]);groups.get(t).push(`${p.a}${SIGN[op]}${p.n}`);});
+      h+=`<div class="rule"><div class="rule-n">${op==='add'?'たせない':'ひけない'}${n}は</div><div>${[...groups].map(([t,l])=>`<p><span class="rule-ph">${esc(t)}</span><span class="rule-list">${l.join('、')}</span></p>`).join('')}</div></div>`;
+    }
+  }
+  $('rules').innerHTML=h;
+}
+
+$('qSpk').addEventListener('click',()=>{unlockAudio();const st=S.steps[S.si];speak(st&&!$('choices').hidden?st.speech:$('q').textContent);});
+$('back').addEventListener('click',showHome);
+$('next').addEventListener('click',()=>{S.idx++;if(S.idx<ROUND)nextProblem();else showDone();});
+$('replay').addEventListener('click',replay);
+$('again').addEventListener('click',()=>startRound(S.lvIdx));
+$('toHome').addEventListener('click',showHome);
+$('toParent').addEventListener('click',()=>{renderParent();showScreen('parent');});
+$('pBack').addEventListener('click',showHome);
+$('modeAdd').addEventListener('click',()=>{store.mode='add';save();renderHome();});
+$('modeSub').addEventListener('click',()=>{store.mode='sub';save();renderHome();});
+$('setVoice').addEventListener('change',e=>{store.settings.voice=e.target.checked;save();});
+$('setSound').addEventListener('change',e=>{store.settings.sound=e.target.checked;save();});
+$('setChoices').addEventListener('change',e=>{store.settings.choices=+e.target.value;save();});
+$('setRate').addEventListener('change',e=>{store.settings.rate=+e.target.value;save();});
+$('reset').addEventListener('click',()=>{$('resetConfirm').hidden=false;});
+$('resetNo').addEventListener('click',()=>{$('resetConfirm').hidden=true;});
+$('resetYes').addEventListener('click',()=>{store.stats={};store.stars={};store.stickers=[];save();$('resetConfirm').hidden=true;renderParent();});
+
+renderHome();
+</script>
+<script>
+// Keep a copy on the iPad so the quiz still opens without Wi-Fi.
+if('serviceWorker' in navigator && location.protocol==='https:'){navigator.serviceWorker.register('sw.js').catch(()=>{});}
+</script>
+</body>
+</html>
