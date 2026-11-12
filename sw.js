@@ -1,6 +1,6 @@
 // Network first, so a new version shows up whenever the iPad is online;
 // falls back to the saved copy when offline.
-const CACHE = 'soroban-quiz-v2';
+const CACHE = 'soroban-quiz-v3';
 const FILES = ['./', './index.html', './manifest.webmanifest', './icon-180.png', './icon-512.png', './icon.svg'];
 
 self.addEventListener('install', e => {
