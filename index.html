@@ -193,7 +193,14 @@ body[data-theme=sub] .board .nb{color:#ff7d8a}
 .pt b{font-size:1.15em;font-weight:900}
 .pt.take{color:var(--take)}
 .pt.put{color:var(--put)}
-.hint{display:flex;flex-wrap:wrap;align-items:center;gap:10px 16px;background:var(--yellow);color:#5a3c00;border-radius:20px;padding:10px 18px;box-shadow:0 5px 0 #c99a00;font-size:clamp(18px,min(2.2vw,3.4vh),24px);animation:pop .35s}
+.hint{display:flex;flex-wrap:wrap;align-items:center;gap:10px 16px;background:var(--yellow);color:#5a3c00;border-radius:20px;padding:10px 18px;box-shadow:0 5px 0 #c99a00;font-size:clamp(18px,min(2.2vw,3.4vh),24px);animation:pop .35s;cursor:pointer}
+.hint .hs{font-size:.9em}
+/* ひらがなの わかちがきは スペースでだけ かいぎょう（「2こ」が わかれないように） */
+.hint,.q,.c-ex{word-break:keep-all;overflow-wrap:anywhere}
+.qrow{display:flex;align-items:center;gap:12px}
+.qrow .q{flex:1;min-width:0}
+.hintbtn{flex:none;background:var(--yellow);color:var(--ink);padding:8px 18px;border-radius:999px;font-size:clamp(18px,min(2vw,3.2vh),24px);box-shadow:0 5px 0 #c99a00;white-space:nowrap}
+.hintbtn:active{transform:translateY(3px);box-shadow:0 2px 0 #c99a00}
 .tf{display:grid;grid-template-columns:repeat(5,24px);gap:5px}
 .tf i{width:24px;height:24px;border-radius:50%;border:3px dashed #7a5600}
 .tf i.on{background:#7a5600;border-style:solid}
@@ -479,7 +486,7 @@ details summary{cursor:pointer;font-size:18px;font-weight:800;padding:4px 0}
       </figure>
       <div class="qside" id="qside">
         <div class="board"><span class="na" id="eqA">5</span><span id="eqOp">+</span><span class="nb" id="eqN">9</span><span>=</span><span class="eqr" id="eqR">?</span></div>
-        <div class="bubble"><p class="q" id="q"></p><ol class="steps" id="steps" aria-hidden="true"></ol></div>
+        <div class="bubble"><div class="qrow"><p class="q" id="q"></p><button class="hintbtn" data-act="hint" id="hintBtn">💡 ヒント</button></div><ol class="steps" id="steps" aria-hidden="true"></ol></div>
         <div class="choices" id="choices"></div>
         <div class="hint" id="hint" hidden></div>
         <div class="answer" id="answer" hidden></div>
@@ -534,6 +541,13 @@ details summary{cursor:pointer;font-size:18px;font-weight:800;padding:4px 0}
         </div>
       </div>
       <div class="set-card">
+        <h3>💡 ヒント</h3>
+        <div class="row">
+          <span class="grow">ヒントの出し方<small>ボタンで出す：こまったら「💡 ヒント」を押して出します。いつも出す：最初から出しておきます。ヒントを見て正解した問題も、シールの正解に数えます</small></span>
+          <div class="seg"><button data-act="seg" data-k="hint" data-val="button">ボタンで出す</button><button data-act="seg" data-k="hint" data-val="always">いつも出す</button></div>
+        </div>
+      </div>
+      <div class="set-card">
         <h3>📊 きろく</h3>
         <div id="stats"></div>
         <div class="row"><span class="grow">シールと記録をすべて消す</span><button class="danger" data-act="reset">すべて消す</button></div>
@@ -547,7 +561,8 @@ details summary{cursor:pointer;font-size:18px;font-weight:800;padding:4px 0}
       <div class="set-card">
         <h3>💡 使い方のヒント</h3>
         <p class="note">・Safari の共有ボタン →「ホーム画面に追加」で、アプリのように全画面で使えます。一度開けば Wi-Fi がなくても動きます。<br>
-        ・1回10問です。10問中7問以上を、まちがえずに正解するとシールがもらえます（とちゅうで1回でもまちがえた問題は数えません）。<br>
+        ・1回10問です。10問中5問以上を、まちがえずに正解するとシールがもらえます（とちゅうで1回でもまちがえた問題は数えません。ヒントを見て正解した問題は数えます）。<br>
+        ・こまったら「💡 ヒント」を押すと、そろばんの見るところと、数えればわかる絵が出ます。ヒントのらんを押すと読み上げます。<br>
         ・まちがえた問題は、次から少し出やすくなります。<br>
         ・言い方のボタンの 🔊 を押すと、その言い方を読み上げます。<br>
         ・記録（シール）はこの iPad の中だけに保存されます。</p>
@@ -732,7 +747,7 @@ const SHINY_RATE = 0.12;
 const RANKS = [[0, 'ルーキー', '🌱'], [15, 'レギュラー', '⚽'], [40, 'エース', '🔥'], [80, 'キャプテン', '🎖️'], [130, 'スター', '⭐'], [200, 'レジェンド', '👑'], [300, 'ワールドクラス', '🌏']];
 
 const ROUND = 10;  // 1かいの もんだい数
-const PASS = 7;    // シールが もらえる せいかい数（10もん ちゅう）
+const PASS = 5;    // シールが もらえる せいかい数（10もん ちゅう）
 
 // [がめんの もじ, よみあげ]
 const PRAISE = [['ゴール！', 'ゴール！'], ['ゴール！', 'ゴール！'], ['ナイスシュート！', 'ナイスシュート！'], ['すごい！', 'すごい！'], ['やったね！', 'やったね！'], ['せいかい！', '正解！'], ['てんさい！', '天才！'], ['ばっちり！', 'ばっちり！']];
@@ -745,7 +760,7 @@ function defaults() {
   return {
     v: 2, mode: 'add', stickers: [], miss: {},
     stats: { add: blankStats(), sub: blankStats() },
-    settings: { speech: true, rate: 1.0, voice: '', sfx: true, choices: 3 },
+    settings: { speech: true, rate: 1.0, voice: '', sfx: true, choices: 3, hint: 'button' },
   };
 }
 let D = defaults();
@@ -1160,32 +1175,42 @@ function validX(kind, x) { return kind === 'ten' || kind === 'sten' ? x >= 1 && 
 function neighbors(kind, x) { return [x + 1, x - 1, x + 2, x - 2].filter(v => validX(kind, v)); }
 function phraseHTML(ph) { return ph.parts.map(p => { const m = p.text.match(/^(\d+)(.*)$/); return `<span class="pt ${p.op}"><b>${m[1]}</b>${esc(m[2])}</span>`; }).join(''); }
 const speechOf = ph => ph.parts.map(p => p.speech).join('、');
-const askPhrase = (q, speech, correct, distractors) => ({ type: 'phrase', q, speech, correct, distractors });
-const askYesNo = (q, speech, labels, ok, hint) => ({ type: 'yesno', q, speech, options: labels.map((label, i) => ({ label, correct: i === ok, h: { hint } })) });
+const askPhrase = (q, speech, correct, distractors, tip) => ({ type: 'phrase', q, speech, correct, distractors, tip });
+const askYesNo = (q, speech, labels, ok, hint, tip) => ({ type: 'yesno', q, speech, options: labels.map((label, i) => ({ label, correct: i === ok, h: { hint } })), tip });
+// 💡 ヒント：こたえは いわずに、そろばんを みたり ○を かぞえたり すれば わかる ように する
+const koSay = c => c ? KO[c] : 'ぜろこ';
+const tip = (text, speech, extra = {}) => ({ text, speech, ...extra });
+const partnerTip = (n, total, pre = '', preS = '') => tip(`${pre}${n} と あわせて ${total} に なる かずは？ ○を かぞえよう`, `${preS}${KANA[n]}と あわせて ${KANA[total]}に なる かずわ？ まるを かぞえよう`, { frame: [total, n] });
 
 function buildSteps(p, lv) { return p.op === 'sub' ? buildSubSteps(p, lv) : buildAddSteps(p, lv); }
 function buildAddSteps(p, lv) {
   const { a, n, kind } = p, k = 10 - n, steps = [];
-  if (lv.look5 && n <= 4) steps.push(askYesNo('5だまを いれられる？', 'ごだまを いれられる？', ['いれられる', 'いれられない'], a < 5 ? 0 : 1, 'look5'));
+  if (lv.look5 && n <= 4) steps.push(askYesNo('5だまを いれられる？', 'ごだまを いれられる？', ['いれられる', 'いれられない'], a < 5 ? 0 : 1, 'look5',
+    tip('5だまが まんなかの ぼうに くっついて いたら、もう いれられないよ', 'ごだまが まんなかの ぼうに くっついて いたら、もう いれられないよ', { hl: 'hl5' })));
   const q = `たせない ${n} は？`, qs = `たせない ${KANA[n]}わ？`;
   if (kind === 'five') {
     const d = [];
     if (lv.look5) d.push({ ph: phrase('ten', k), hint: 'look5' });
     neighbors('five', 5 - n).forEach(x => d.push({ ph: phrase('five', x), hint: 'p5', m: n }));
-    steps.push(askPhrase(q, qs, phrase('five', 5 - n), d));
+    steps.push(askPhrase(q, qs, phrase('five', 5 - n), d,
+      lv.look5 ? partnerTip(n, 5, '5だまが いれられるから 5の ともだち。', 'ごだまが いれられるから、ごの ともだち。') : partnerTip(n, 5)));
     return steps;
   }
   const d = [];
   if (lv.look5 && n <= 4) d.push({ ph: phrase('five', 5 - n), hint: 'look5' });
   neighbors('ten', k).forEach(x => d.push({ ph: phrase('ten', x), hint: 'p10', m: n }));
-  steps.push(askPhrase(q, qs, phrase('ten', k), d));
+  steps.push(askPhrase(q, qs, phrase('ten', k), d,
+    lv.look5 && n <= 4 ? partnerTip(n, 10, '5だまが いれられないから 10の ともだち。', 'ごだまが いれられないから、じゅうの ともだち。') : partnerTip(n, 10)));
   if (n >= 6 && (lv.look1 || kind === 'tenfive')) {
     const can = kind === 'ten';
-    steps.push(askYesNo(`いちの 1だまを ${k}こ とれる？`, `いちだまを ${KO[k]} とれる？`, ['とれる', 'とれない'], can ? 0 : 1, 'look1'));
+    const c = a % 5;  // まんなかの ぼうに くっついて いる（いま かぞえている）1だま
+    steps.push(askYesNo(`いちの 1だまを ${k}こ とれる？`, `いちだまを ${KO[k]} とれる？`, ['とれる', 'とれない'], can ? 0 : 1, 'look1',
+      tip(`まんなかの ぼうに くっついて いる 1だまは ${c}こ。${k}こ とれるかな？`, `まんなかの ぼうに くっついて いる いちだまわ ${koSay(c)}。${KO[k]} とれるかな？`, { hl: 'hl1' })));
     if (!can) {
       const d2 = [{ ph: phrase('ten', k), hint: 'short', m: k }];
       neighbors('tenfive', n - 5).forEach(x => d2.push({ ph: phrase('tenfive', x), hint: 'p5', m: k }));
-      steps.push(askPhrase('1だまが たりない！ どうする？', 'いちだまが たりない！ どうする？', phrase('tenfive', n - 5), d2));
+      steps.push(askPhrase('1だまが たりない！ どうする？', 'いちだまが たりない！ どうする？', phrase('tenfive', n - 5), d2,
+        tip(`5だまを つかうよ。${k} と あわせて 5 に なる かずを いれて、5を とって、10 いれるよ`, `ごだまを つかうよ。${KANA[k]}と あわせて ごに なる かずを いれて、ごを とって、じゅう いれるよ`, { frame: [5, k] })));
     }
   }
   return steps;
@@ -1193,26 +1218,32 @@ function buildAddSteps(p, lv) {
 // たしざんと おなじ 3だんがまえ：いいかた → そろばんを みる → れいがいの いいかた
 function buildSubSteps(p, lv) {
   const { a, n, kind } = p, k = 10 - n, u = a % 10, steps = [];
-  if (lv.look5 && n <= 4) steps.push(askYesNo('5だまを とれる？', 'ごだまを とれる？', ['とれる', 'とれない'], u >= 5 ? 0 : 1, 'look5s'));
+  if (lv.look5 && n <= 4) steps.push(askYesNo('5だまを とれる？', 'ごだまを とれる？', ['とれる', 'とれない'], u >= 5 ? 0 : 1, 'look5s',
+    tip('5だまが まんなかの ぼうに くっついて いたら、とれるよ', 'ごだまが まんなかの ぼうに くっついて いたら、とれるよ', { hl: 'hl5' })));
   const q = `ひけない ${n} は？`, qs = `ひけない ${KANA[n]}わ？`;
   if (kind === 'sfive') {
     const d = [];
     if (lv.look5) d.push({ ph: phrase('sten', k), hint: 'look5s' });
     neighbors('sfive', 5 - n).forEach(x => d.push({ ph: phrase('sfive', x), hint: 'p5', m: n }));
-    steps.push(askPhrase(q, qs, phrase('sfive', 5 - n), d));
+    steps.push(askPhrase(q, qs, phrase('sfive', 5 - n), d,
+      lv.look5 ? partnerTip(n, 5, '5だまが とれるから 5の ともだち。', 'ごだまが とれるから、ごの ともだち。') : partnerTip(n, 5)));
     return steps;
   }
   const d = [];
   if (lv.look5 && n <= 4) d.push({ ph: phrase('sfive', 5 - n), hint: 'look5s' });
   neighbors('sten', k).forEach(x => d.push({ ph: phrase('sten', x), hint: 'p10', m: n }));
-  steps.push(askPhrase(q, qs, phrase('sten', k), d));
+  steps.push(askPhrase(q, qs, phrase('sten', k), d,
+    lv.look5 && n <= 4 ? partnerTip(n, 10, '5だまが とれないから 10の ともだち。', 'ごだまが とれないから、じゅうの ともだち。') : partnerTip(n, 10)));
   if (n >= 6 && (lv.look1 || kind === 'stenfive')) {
     const can = kind === 'sten';
-    steps.push(askYesNo(`いちの 1だまを ${k}こ いれられる？`, `いちだまを ${KO[k]} いれられる？`, ['いれられる', 'いれられない'], can ? 0 : 1, 'look1s'));
+    const free = 4 - u % 5;  // したに おりている（まだ いれられる）1だま
+    steps.push(askYesNo(`いちの 1だまを ${k}こ いれられる？`, `いちだまを ${KO[k]} いれられる？`, ['いれられる', 'いれられない'], can ? 0 : 1, 'look1s',
+      tip(`したに おりて いる 1だまは ${free}こ。${k}こ いれられるかな？`, `したに おりて いる いちだまわ ${koSay(free)}。${KO[k]} いれられるかな？`, { hl: 'hl1' })));
     if (!can) {
       const d2 = [{ ph: phrase('sten', k), hint: 'full', m: k }];
       neighbors('stenfive', n - 5).forEach(x => d2.push({ ph: phrase('stenfive', x), hint: 'p5', m: k }));
-      steps.push(askPhrase('1だまが いれられない！ どうする？', 'いちだまが いれられない！ どうする？', phrase('stenfive', n - 5), d2));
+      steps.push(askPhrase('1だまが いれられない！ どうする？', 'いちだまが いれられない！ どうする？', phrase('stenfive', n - 5), d2,
+        tip(`5だまを つかうよ。10を とって、5を いれて、${k} と あわせて 5 に なる かずを とるよ`, `ごだまを つかうよ。じゅうを とって、ごを いれて、${KANA[k]}と あわせて ごに なる かずを とるよ`, { frame: [5, k] })));
     }
   }
   return steps;
@@ -1244,14 +1275,15 @@ function pickRound(lv) {
   }
   return out;
 }
-function updateMiss(p, first) {
+function updateMiss(p, first, hinted) {
   const k = p.key;
+  if (first && hinted) return;  // ヒントで せいかい：にがての きろくは そのまま
   if (first) { if (D.miss[k]) { D.miss[k]--; if (!D.miss[k]) delete D.miss[k]; } }
   else D.miss[k] = Math.min(5, (D.miss[k] || 0) + 1);
 }
 
 // ---------- もんだい ----------
-const Q = { lv: null, queue: [], idx: 0, prob: null, steps: [], si: 0, first: true, lock: false, recorded: false, results: [], combo: 0, token: 0, active: false, stage: 'ask', skipGoal: null };
+const Q = { lv: null, queue: [], idx: 0, prob: null, steps: [], si: 0, first: true, hinted: false, curHint: null, lock: false, recorded: false, results: [], combo: 0, token: 0, active: false, stage: 'ask', skipGoal: null };
 
 function startRound(id) {
   SFX.unlock();
@@ -1278,7 +1310,7 @@ function renderProgress() {
 }
 function nextProblem() {
   const p = Q.queue[Q.idx];
-  Object.assign(Q, { prob: p, steps: buildSteps(p, Q.lv), si: 0, first: true, lock: false, recorded: false, stage: 'ask' });
+  Object.assign(Q, { prob: p, steps: buildSteps(p, Q.lv), si: 0, first: true, hinted: false, lock: false, recorded: false, stage: 'ask' });
   Q.token++;
   unpaint(); rods = initRods(p.a); draw();
   $('#eqA').textContent = p.a; $('#eqOp').textContent = THEMES[p.op].op; $('#eqN').textContent = p.n;
@@ -1313,10 +1345,14 @@ function renderStep() {
     b.addEventListener('click', () => choose(o, b));
     row.appendChild(b); box.appendChild(row);
   }
+  const always = S().hint === 'always';
+  $('#hintBtn').hidden = !st.tip || always;
+  if (always && st.tip) showHint(st.tip);
 }
 function showHint(h) {
   const el = $('#hint');
-  el.innerHTML = `<span>${esc(h.text)}</span>` + (h.frame ? frameHTML(h.frame[0], h.frame[1]) : '');
+  Q.curHint = h;
+  el.innerHTML = `<span>💡 ${esc(h.text)}</span>` + (h.frame ? frameHTML(h.frame[0], h.frame[1]) : '') + '<span class="hs" aria-hidden="true">🔊</span>';
   el.hidden = false; hideHl();
   if (h.hl) $('#' + h.hl).classList.add('on');
 }
@@ -1347,13 +1383,13 @@ function choose(o, b) {
 async function shoot() {
   const p = Q.prob, tk = Q.token;
   Q.stage = 'goal';
-  $('#choices').hidden = true; hideHint();
+  $('#choices').hidden = true; hideHint(); $('#hintBtn').hidden = true;
   $$('#steps li').forEach(li => { li.className = 'done'; });
   if (!Q.recorded) {
     Q.recorded = true;
     Q.results[Q.idx] = Q.first;
     Q.combo = Q.first ? Q.combo + 1 : 0;
-    updateMiss(p, Q.first);
+    updateMiss(p, Q.first, Q.hinted);
     save();
     renderProgress();
   }
@@ -1628,6 +1664,14 @@ document.addEventListener('click', e => {
     case 'home': goHome(); break;
     case 'next': nextQuestion(); break;
     case 'replay': replay(); break;
+    case 'hint': {
+      const st = Q.steps[Q.si];
+      if (Q.stage !== 'ask' || !st || !st.tip) break;
+      Q.hinted = true;
+      showHint(st.tip);
+      Speech.speak(st.tip.speech);
+      break;
+    }
     case 'repeat':
       if (!Q.prob) break;
       if (Q.stage === 'ask') Speech.speak(Q.steps[Q.si].speech);
@@ -1698,6 +1742,8 @@ function sayRank() {
 }
 // おわった アニメーションの しるしを はずす（がめんを きりかえたときに また でてこないように）
 $('#pass').addEventListener('animationend', e => e.currentTarget.classList.remove('show'));
+// ヒントの らんを おすと よみあげ
+$('#hint').addEventListener('click', () => { if (Q.curHint) Speech.speak(Q.curHint.speech); });
 // ゴールの えんしゅつ中に タップすると すぐ そろばんへ
 $('#goal').addEventListener('click', () => { if (Q.skipGoal) { Speech.stop(); Q.skipGoal(); } });
 document.addEventListener('visibilitychange', () => {
