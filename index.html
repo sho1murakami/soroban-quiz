@@ -1095,7 +1095,9 @@ function rankOf(n) {
   for (const x of RANKS) { if (n >= x[0]) r = x; else { next = x; break; } }
   return { r, next };
 }
-const themeCount = t => D.stickers.filter(s => s.t === t).length;
+// まえの バージョンの シール（t:'old'）は たしざんに かぞえる
+const themeOf = s => THEMES[s.t] ? s.t : 'add';
+const themeCount = t => D.stickers.filter(s => themeOf(s) === t).length;
 const isToday = ms => !!ms && new Date(ms).toDateString() === new Date().toDateString();
 
 function awardSticker(theme, course) {
@@ -1542,7 +1544,7 @@ function renderBook() {
   $$('#bookTabs [data-f]').forEach(b => {
     const f = b.dataset.f, cnt = b.querySelector('b');
     b.classList.toggle('on', f === bookFilter);
-    if (cnt) cnt.textContent = f === 'all' ? st.length : st.filter(s => s.t === f).length;
+    if (cnt) cnt.textContent = f === 'all' ? st.length : themeCount(f);
   });
   const body = $('#bookBody');
   if (bookFilter === 'zukan') {
@@ -1553,7 +1555,7 @@ function renderBook() {
     }).join('') + '</div>';
     return;
   }
-  const list = st.map((s, i) => ({ s, i })).filter(x => bookFilter === 'all' || x.s.t === bookFilter);
+  const list = st.map((s, i) => ({ s, i })).filter(x => bookFilter === 'all' || themeOf(x.s) === bookFilter);
   if (!list.length) {
     body.innerHTML = `<div class="empty">まだ シールが ないよ。<br>10もん ちゅう ${PASS}もん いじょう せいかいで シール ゲット！</div>`;
     return;
@@ -1637,7 +1639,7 @@ function renderSettings() {
     return p ? `${p.a}${THEMES[p.op].op}${p.n}（${phraseText(finalPhrase(p))}）` : '';
   }).filter(Boolean).join('、');
   $('#stats').innerHTML = `<table class="st"><thead><tr><th></th><th>あそんだ</th><th>全問正解</th><th>シール</th><th>ランク</th><th>1回目の正解率</th></tr></thead><tbody>${rows}</tbody></table>
-    ${oldCnt ? `<p class="note">前のバージョン（5問でシール）でもらったシール：${oldCnt}枚（シールちょうの「ぜんぶ」と「ずかん」に入っています）</p>` : ''}
+    ${oldCnt ? `<p class="note">前のバージョン（5問でシール）でもらったシール：${oldCnt}枚（たしざんのシール・ランクに数えています）</p>` : ''}
     <p class="note">にがてな問題：${weak || 'まだ ありません'}</p>`;
   let h = '';
   for (const op of ['add', 'sub']) {
