@@ -563,7 +563,7 @@ details summary{cursor:pointer;font-size:18px;font-weight:800;padding:4px 0}
       <div class="set-card">
         <h3>💡 使い方のヒント</h3>
         <p class="note">・Safari の共有ボタン →「ホーム画面に追加」で、アプリのように全画面で使えます。一度開けば Wi-Fi がなくても動きます。<br>
-        ・1回10問です。10問中5問以上を、まちがえずに正解するとシールがもらえます（とちゅうで1回でもまちがえた問題は数えません。ヒントを見て正解した問題は数えます）。<br>
+        ・1回5問です。5問中3問以上を、まちがえずに正解するとシールがもらえます（とちゅうで1回でもまちがえた問題は数えません。ヒントを見て正解した問題は数えます）。<br>
         ・こまったら「💡 ヒント」を押すと、そろばんの見るところと、数えればわかる絵が出ます。ヒントのらんを押すと読み上げます。<br>
         ・まちがえた問題は、次から少し出やすくなります。<br>
         ・言い方のボタンの 🔊 を押すと、その言い方を読み上げます。<br>
@@ -614,7 +614,7 @@ details summary{cursor:pointer;font-size:18px;font-weight:800;padding:4px 0}
     <div class="res-card">
       <div class="res-top">しあい しゅうりょう！</div>
       <div class="res-balls" id="resBalls"></div>
-      <div class="res-score"><b id="resOk">0</b> / 10 ゴール</div>
+      <div class="res-score"><b id="resOk">0</b> / <span id="resTotal">5</span> ゴール</div>
       <div class="res-msg" id="resMsg"></div>
       <div class="res-btns">
         <button class="bigbtn yellow" data-act="again">⚽ もういっかい</button>
@@ -748,8 +748,8 @@ const SHINY_RATE = 0.12;
 // ランク（たしざん・ひきざん それぞれ）[ひつような まいすう, なまえ, アイコン]
 const RANKS = [[0, 'ルーキー', '🌱'], [15, 'レギュラー', '⚽'], [40, 'エース', '🔥'], [80, 'キャプテン', '🎖️'], [130, 'スター', '⭐'], [200, 'レジェンド', '👑'], [300, 'ワールドクラス', '🌏']];
 
-const ROUND = 10;  // 1かいの もんだい数
-const PASS = 5;    // シールが もらえる せいかい数（10もん ちゅう）
+const ROUND = 5;   // 1かいの もんだい数
+const PASS = 3;    // シールが もらえる せいかい数（5もん ちゅう）
 
 // [がめんの もじ, よみあげ]
 const PRAISE = [['ゴール！', 'ゴール！'], ['ゴール！', 'ゴール！'], ['ナイスシュート！', 'ナイスシュート！'], ['すごい！', 'すごい！'], ['やったね！', 'やったね！'], ['せいかい！', '正解！'], ['てんさい！', '天才！'], ['ばっちり！', 'ばっちり！']];
@@ -1502,8 +1502,8 @@ function showWin({ s, isNew, rankUp }, ok) {
 function showResult(ok) {
   $('#resBalls').innerHTML = Q.results.map(r => `<i class="${r ? 'ok' : 'ng'}">${r ? '⚽' : ''}</i>`).join('');
   $('#resOk').textContent = ok;
-  let msg = ok >= 4 ? 'いいね！ その ちょうし！' : 'がんばったね！';
-  if (ok === PASS - 1) msg = 'おしい！ あと 1もん！';
+  $('#resTotal').textContent = Q.queue.length;
+  const msg = ok === PASS - 1 ? 'おしい！ あと 1もん！' : 'がんばったね！';
   $('#resMsg').innerHTML = `${msg}<br><small>${PASS}もん いじょう 1かいで せいかいすると シール ゲット！</small>`;
   $('#result').classList.add('show');
   SFX.cheer();
@@ -1557,7 +1557,7 @@ function renderBook() {
   }
   const list = st.map((s, i) => ({ s, i })).filter(x => bookFilter === 'all' || themeOf(x.s) === bookFilter);
   if (!list.length) {
-    body.innerHTML = `<div class="empty">まだ シールが ないよ。<br>10もん ちゅう ${PASS}もん いじょう せいかいで シール ゲット！</div>`;
+    body.innerHTML = `<div class="empty">まだ シールが ないよ。<br>${ROUND}もん ちゅう ${PASS}もん いじょう せいかいで シール ゲット！</div>`;
     return;
   }
   body.innerHTML = '<div class="board-stk">' + list.map(({ s, i }) =>
@@ -1639,7 +1639,7 @@ function renderSettings() {
     return p ? `${p.a}${THEMES[p.op].op}${p.n}（${phraseText(finalPhrase(p))}）` : '';
   }).filter(Boolean).join('、');
   $('#stats').innerHTML = `<table class="st"><thead><tr><th></th><th>あそんだ</th><th>全問正解</th><th>シール</th><th>ランク</th><th>1回目の正解率</th></tr></thead><tbody>${rows}</tbody></table>
-    ${oldCnt ? `<p class="note">前のバージョン（5問でシール）でもらったシール：${oldCnt}枚（たしざんのシール・ランクに数えています）</p>` : ''}
+    ${oldCnt ? `<p class="note">前のバージョンでもらったシール：${oldCnt}枚（たしざんのシール・ランクに数えています）</p>` : ''}
     <p class="note">にがてな問題：${weak || 'まだ ありません'}</p>`;
   let h = '';
   for (const op of ['add', 'sub']) {
