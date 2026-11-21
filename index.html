@@ -722,7 +722,7 @@ const LEVELS = [
 const LMAP = Object.fromEntries(LEVELS.map(l => [l.id, l]));
 const KIND_LABEL = { five: '5のともだち', ten: '10のともだち', tenfive: '5だまを つかう', sfive: '5のともだち', sten: '10のともだち', stenfive: '5だまを つかう' };
 
-// シールの しゅるい（さんすうアプリ と おなじ）[id, 絵文字, なまえ, いろ]
+// シールの しゅるい（かけざんアプリ と おなじ 100しゅるい）[id, 絵文字, なまえ, いろ]
 const DESIGNS = [
   ['ball', '⚽', 'サッカーボール', '#8fd8ff'], ['goal', '🥅', 'ゴール', '#a6e89a'], ['trophy', '🏆', 'トロフィー', '#ffd36b'],
   ['medal', '🥇', 'きんメダル', '#ffe08a'], ['shoes', '👟', 'スパイク', '#ffb8cb'], ['gloves', '🧤', 'キーパーてぶくろ', '#cdbcff'],
@@ -740,9 +740,34 @@ const DESIGNS = [
   ['sun', '🌞', 'おひさま', '#ffe590'], ['volcano', '🌋', 'かざん', '#ffc8b0'], ['saturn', '🪐', 'どせい', '#e6d8ff'],
   ['onigiri', '🍙', 'おにぎり', '#e9f6e2'], ['strawberry', '🍓', 'いちご', '#ffd4dc'], ['icecream', '🍦', 'ソフトクリーム', '#fff1d9'],
   ['crown', '👑', 'おうかん', '#ffe794'], ['gem', '💎', 'ほうせき', '#ccf2ff'],
+  // ここから 54しゅるい ふやした（ぜんぶで 100しゅるい）
+  ['monkey', '🐵', 'サル', '#f2d4b0'], ['giraffe', '🦒', 'キリン', '#ffe3a3'], ['elephant', '🐘', 'ゾウ', '#d6dde8'],
+  ['zebra', '🦓', 'シマウマ', '#e8e8f0'], ['hippo', '🦛', 'カバ', '#dcd0f0'], ['rhino', '🦏', 'サイ', '#d9dfe6'],
+  ['kangaroo', '🦘', 'カンガルー', '#f5d2a8'], ['squirrel', '🐿️', 'リス', '#f3cfa6'], ['hedgehog', '🦔', 'ハリネズミ', '#e8d6c2'],
+  ['owl', '🦉', 'フクロウ', '#e2cfb4'], ['parrot', '🦜', 'オウム', '#c6f0b0'], ['whale', '🐳', 'クジラ', '#b5dcff'],
+  ['tropicalfish', '🐠', 'ねったいぎょ', '#ffd9a8'], ['crab', '🦀', 'カニ', '#ffc4b8'], ['ladybug', '🐞', 'テントウムシ', '#ffc9c9'],
+  ['butterfly', '🦋', 'チョウ', '#cfe2ff'], ['bee', '🐝', 'ミツバチ', '#fff0a6'], ['crocodile', '🐊', 'ワニ', '#c4ecb0'],
+  ['flamingo', '🦩', 'フラミンゴ', '#ffd1e6'], ['hamster', '🐹', 'ハムスター', '#ffe4c4'], ['horse', '🐴', 'ウマ', '#ecd6bc'],
+  ['cow', '🐮', 'ウシ', '#ececf4'], ['pig', '🐷', 'ブタ', '#ffd6e2'], ['chick', '🐥', 'ひよこ', '#fff4a8'],
+  ['train', '🚂', 'きかんしゃ', '#d8dde6'], ['bus', '🚌', 'バス', '#ffeab0'], ['tractor', '🚜', 'トラクター', '#d6efc2'],
+  ['ship', '🚢', 'ふね', '#cfe6ff'], ['ufo', '🛸', 'ユーフォー', '#d8d2ff'], ['racecar', '🏎️', 'レーシングカー', '#ffc6c6'],
+  ['bicycle', '🚲', 'じてんしゃ', '#d2f0e6'], ['baseball', '⚾', 'やきゅう', '#f0f0f0'], ['basketball', '🏀', 'バスケットボール', '#ffd2a8'],
+  ['tennis', '🎾', 'テニス', '#e6f7b0'], ['pingpong', '🏓', 'たっきゅう', '#ffd0d0'], ['target', '🎯', 'まと', '#ffe0e0'],
+  ['moon', '🌙', 'おつきさま', '#fff6c2'], ['comet', '☄️', 'ほうきぼし', '#ffd8b8'], ['earth', '🌍', 'ちきゅう', '#c8e8ff'],
+  ['sunflower', '🌻', 'ひまわり', '#fff0a0'], ['sakura', '🌸', 'さくら', '#ffe0ec'], ['clover', '🍀', 'よつばの クローバー', '#d2f5c8'],
+  ['mushroom', '🍄', 'キノコ', '#ffd6cc'], ['cactus', '🌵', 'サボテン', '#d6f0c4'], ['snowflake', '❄️', 'ゆきの けっしょう', '#dff2ff'],
+  ['pizza', '🍕', 'ピザ', '#ffe0b0'], ['burger', '🍔', 'ハンバーガー', '#ffdcb0'], ['donut', '🍩', 'ドーナツ', '#ffd6e4'],
+  ['cake', '🍰', 'ショートケーキ', '#fff0f0'], ['watermelon', '🍉', 'スイカ', '#d8f5c8'], ['sushi', '🍣', 'おすし', '#ffe6d6'],
+  ['ghost', '👻', 'おばけ', '#e8e8ff'], ['wizard', '🧙', 'まほうつかい', '#e0d4ff'], ['castle', '🏰', 'おしろ', '#e4e8f0'],
 ].map(([id, e, name, bg]) => ({ id, e, name, bg }));
 const DMAP = Object.fromEntries(DESIGNS.map(d => [d.id, d]));
-const RARE = new Set(['trophy', 'crown', 'gem', 'dragon', 'unicorn', 'saturn']);
+// でやすさ（かけざんアプリ と おなじ）：スーパーレア・レアは でにくい
+const GRADE_W = { sr: 0.12, r: 0.4, n: 1 };
+const SR_IDS = new Set(['crown', 'gem', 'dragon', 'unicorn', 'ufo', 'castle']);
+const R_IDS = new Set(['trophy', 'saturn', 'medal', 'rocket', 'trex', 'shinkansen', 'whale', 'owl', 'flamingo', 'rainbow', 'earth', 'clover', 'wizard', 'comet', 'racecar', 'volcano']);
+const gradeOf = id => SR_IDS.has(id) ? 'sr' : R_IDS.has(id) ? 'r' : 'n';
+const UNOWNED_BOOST = 2.5;  // まだ もって いない シールは 2.5ばい でやすい
+const PERFECT_SR = 1.5;     // ぜんもん せいかいの ときは スーパーレアが 1.5ばい でやすい
 const SHINY_RATE = 0.12;
 
 // ランク（たしざん・ひきざん それぞれ）[ひつような まいすう, なまえ, アイコン]
@@ -1100,10 +1125,10 @@ const themeOf = s => THEMES[s.t] ? s.t : 'add';
 const themeCount = t => D.stickers.filter(s => themeOf(s) === t).length;
 const isToday = ms => !!ms && new Date(ms).toDateString() === new Date().toDateString();
 
-function awardSticker(theme, course) {
+function awardSticker(theme, course, perfect) {
   const owned = new Set(D.stickers.map(s => s.d));
   // まだ もっていない シールが でやすい・レアは でにくい
-  const w = DESIGNS.map(d => (RARE.has(d.id) ? 0.35 : 1) * (owned.has(d.id) ? 1 : 2.5));
+  const w = DESIGNS.map(d => { const g = gradeOf(d.id); return GRADE_W[g] * (owned.has(d.id) ? 1 : UNOWNED_BOOST) * (perfect && g === 'sr' ? PERFECT_SR : 1); });
   let r = Math.random() * w.reduce((a, b) => a + b, 0), i = 0;
   for (; i < DESIGNS.length - 1; i++) { r -= w[i]; if (r <= 0) break; }
   const before = rankOf(themeCount(theme)).r;
@@ -1473,7 +1498,7 @@ function finishQuiz() {
   st.play++; st.q += Q.queue.length; st.ok += ok;
   if (ok === Q.queue.length) st.perfect++;
   if (ok >= PASS) {
-    const res = awardSticker(theme, Q.lv.id);
+    const res = awardSticker(theme, Q.lv.id, ok === Q.queue.length);
     save();
     showWin(res, ok);
   } else {
